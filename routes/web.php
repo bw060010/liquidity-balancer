@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+use App\Http\Controllers\CalculationController;
+
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/calculate', [CalculationController::class, 'showForm']);
+Route::post('/calculate', [CalculationController::class, 'performCalculation']);
