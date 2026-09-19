@@ -114,6 +114,17 @@ p {
     border-radius: 4px;
 }
 
+.input-field--error {
+    border-color: #b00020;
+}
+
+.field-error {
+    flex-basis: 100%;
+    margin: 0.25rem 0 0;
+    color: #b00020;
+    font-size: 0.875rem;
+}
+
 /* Button styling */
 .form button {
     width: 100%;

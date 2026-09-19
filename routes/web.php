@@ -1,23 +1,13 @@
 <?php
 
+use App\Http\Controllers\CalculationController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+Route::redirect('/', '/calculate')->name('home');
 
-use App\Http\Controllers\CalculationController;
+Route::get('/calculate', [CalculationController::class, 'showForm'])
+    ->name('calculate.show');
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/calculate', [CalculationController::class, 'showForm']);
-Route::post('/calculate', [CalculationController::class, 'performCalculation']);
+Route::post('/calculate', [CalculationController::class, 'performCalculation'])
+    ->middleware('throttle:30,1')
+    ->name('calculate.store');
