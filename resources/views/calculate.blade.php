@@ -42,8 +42,88 @@
 
         <section class="form-container">
             <h2>Input</h2>
-            <form action="/calculate#ad-placeholder" method="POST" class="form">
+            <form action="/calculate#ad-placeholder" method="POST" class="form" id="deposit-planner-form">
                 @csrf
+                @php
+                    $selectedMode = $input['mode'] ?? 'rebalance';
+                @endphp
+                <div class="section">
+                    <fieldset class="mode-fieldset">
+                        <legend class="input-label">Deposit mode</legend>
+                        <div class="mode-options" role="radiogroup" aria-label="Deposit mode">
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="rebalance"
+                                    {{ $selectedMode === 'rebalance' ? 'checked' : '' }}>
+                                <span>Rebalance holdings</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="deploy_budget"
+                                    {{ $selectedMode === 'deploy_budget' ? 'checked' : '' }}>
+                                <span>Deploy budget</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="keep_a"
+                                    {{ $selectedMode === 'keep_a' ? 'checked' : '' }}>
+                                <span>Keep Coin A</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="keep_b"
+                                    {{ $selectedMode === 'keep_b' ? 'checked' : '' }}>
+                                <span>Keep Coin B</span>
+                            </label>
+                        </div>
+                        <p class="mode-hint">Rebalance reshapes what you hold. Deploy budget splits new capital by pool weights. Keep modes fix one side and buy only the missing other side.</p>
+                    </fieldset>
+                </div>
+                <div class="section" id="new-capital-section">
+                    <div class="input-group">
+                        <label for="new_capital" class="input-label">New capital ($)</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon" tabindex="0" aria-label="More info">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    height="24" width="24">
+                                    <path xmlns="http://www.w3.org/2000/svg"
+                                        d="M12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4ZM2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12Z"
+                                        fill="#0D0D0D"></path>
+                                    <path xmlns="http://www.w3.org/2000/svg"
+                                        d="M12 10C12.5523 10 13 10.4477 13 11V17C13 17.5523 12.5523 18 12 18C11.4477 18 11 17.5523 11 17V11C11 10.4477 11.4477 10 12 10Z"
+                                        fill="#0D0D0D"></path>
+                                    <path xmlns="http://www.w3.org/2000/svg"
+                                        d="M13.5 7.5C13.5 8.32843 12.8284 9 12 9C11.1716 9 10.5 8.32843 10.5 7.5C10.5 6.67157 11.1716 6 12 6C12.8284 6 13.5 6.67157 13.5 7.5Z"
+                                        fill="#0D0D0D"></path>
+                                </svg>
+                                <span class="tooltip-text" role="tooltip">Dollar amount of new capital to split into Coin A and Coin B by the pool value weights. Holdings are ignored in Deploy budget mode.</span>
+                            </span>
+                        </div>
+                        <input type="text" name="new_capital" id="new_capital" pattern="\d+(\.\d+)?"
+                            class="input-field" value="{{ $input['new_capital'] ?? '' }}">
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="input-group">
+                        <label for="slippage_pct" class="input-label">Slippage buffer (%)</label>
+                        <div class="tooltip-container">
+                            <span class="tooltip-icon" tabindex="0" aria-label="More info">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    height="24" width="24">
+                                    <path xmlns="http://www.w3.org/2000/svg"
+                                        d="M12 4C7.58172 4 4 7.58172 4 12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12C20 7.58172 16.4183 4 12 4ZM2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12Z"
+                                        fill="#0D0D0D"></path>
+                                    <path xmlns="http://www.w3.org/2000/svg"
+                                        d="M12 10C12.5523 10 13 10.4477 13 11V17C13 17.5523 12.5523 18 12 18C11.4477 18 11 17.5523 11 17V11C11 10.4477 11.4477 10 12 10Z"
+                                        fill="#0D0D0D"></path>
+                                    <path xmlns="http://www.w3.org/2000/svg"
+                                        d="M13.5 7.5C13.5 8.32843 12.8284 9 12 9C11.1716 9 10.5 8.32843 10.5 7.5C10.5 6.67157 11.1716 6 12 6C12.8284 6 13.5 6.67157 13.5 7.5Z"
+                                        fill="#0D0D0D"></path>
+                                </svg>
+                                <span class="tooltip-text" role="tooltip">Optional. Inflates buy amounts only (0–5%). Leave 0 for ideal math.</span>
+                            </span>
+                        </div>
+                        <input type="text" name="slippage_pct" id="slippage_pct" pattern="\d+(\.\d+)?"
+                            class="input-field" placeholder="0"
+                            value="{{ $input['slippage_pct'] ?? '' }}">
+                    </div>
+                </div>
                 <div class="section">
                     <div class="input-group">
                         <label for="coinA_initial" class="input-label">Coin A Reference Amount</label>
@@ -175,7 +255,7 @@
                             </span>
                         </div>
                         <input type="text" name="coinA_adjusted" id="coinA_adjusted" pattern="\d+(\.\d+)?"
-                            class="input-field" value="{{ $input['coinA_adjusted'] ?? '' }}" required>
+                            class="input-field holdings-field" value="{{ $input['coinA_adjusted'] ?? '' }}">
                     </div>
                 </div>
                 <div class="section">
@@ -201,7 +281,7 @@
                             </span>
                         </div>
                         <input type="text" name="coinB_adjusted" id="coinB_adjusted" pattern="\d+(\.\d+)?"
-                            class="input-field" value="{{ $input['coinB_adjusted'] ?? '' }}" required>
+                            class="input-field holdings-field" value="{{ $input['coinB_adjusted'] ?? '' }}">
                     </div>
                 </div>
                 <div class="section">
@@ -220,6 +300,31 @@
         @if (isset($unitsOfCoinsResult))
             <section class="results-container">
                 <h2>Output</h2>
+                @php
+                    $modeLabels = [
+                        'rebalance' => 'Rebalance holdings',
+                        'deploy_budget' => 'Deploy budget',
+                        'keep_a' => 'Keep Coin A',
+                        'keep_b' => 'Keep Coin B',
+                    ];
+                @endphp
+                <p class="mode-result-label"><strong>Mode:</strong> {{ $modeLabels[$mode] ?? $mode }}</p>
+                @if (!empty($warnings))
+                    <ul class="warnings-list">
+                        @foreach ($warnings as $warning)
+                            <li>{{ $warning }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                @if (!is_null($capitalDeployed ?? null))
+                    <p class="capital-line">Capital deployed: <em>${{ number_format((float) $capitalDeployed, 2) }}</em></p>
+                @endif
+                @if (!is_null($capitalRequired ?? null))
+                    <p class="capital-line">Capital required to buy the missing side: <em>${{ number_format((float) $capitalRequired, 2) }}</em></p>
+                @endif
+                @if (($slippageApplied ?? 0) > 0)
+                    <p class="slippage-note">Buy amounts include a {{ rtrim(rtrim(number_format((float) $slippageApplied, 4), '0'), '.') }}% slippage buffer.</p>
+                @endif
                 <p class="fun-text">{{ $text }}</p>
                 {!! $text_swap !!}
                 <div id="results" class="results">
@@ -243,6 +348,57 @@
             </p>
         </footer>
     </div>
+    <script>
+        (function () {
+            var form = document.getElementById('deposit-planner-form');
+            if (!form) return;
+
+            var capitalSection = document.getElementById('new-capital-section');
+            var capitalInput = document.getElementById('new_capital');
+            var holdingsFields = form.querySelectorAll('.holdings-field');
+
+            function selectedMode() {
+                var checked = form.querySelector('input[name="mode"]:checked');
+                return checked ? checked.value : 'rebalance';
+            }
+
+            function syncModeUi() {
+                var mode = selectedMode();
+                var isDeploy = mode === 'deploy_budget';
+
+                if (capitalSection) {
+                    capitalSection.style.display = isDeploy ? '' : 'none';
+                }
+                if (capitalInput) {
+                    capitalInput.required = isDeploy;
+                    if (!isDeploy) {
+                        capitalInput.removeAttribute('required');
+                    }
+                }
+
+                holdingsFields.forEach(function (field) {
+                    if (isDeploy) {
+                        field.required = false;
+                        field.removeAttribute('required');
+                    } else if (mode === 'keep_a' && field.id === 'coinA_adjusted') {
+                        field.required = true;
+                    } else if (mode === 'keep_b' && field.id === 'coinB_adjusted') {
+                        field.required = true;
+                    } else if (mode === 'rebalance') {
+                        field.required = true;
+                    } else {
+                        field.required = false;
+                        field.removeAttribute('required');
+                    }
+                });
+            }
+
+            form.querySelectorAll('input[name="mode"]').forEach(function (radio) {
+                radio.addEventListener('change', syncModeUi);
+            });
+            syncModeUi();
+        })();
+    </script>
 </body>
 
 </html>
