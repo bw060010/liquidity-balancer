@@ -216,4 +216,34 @@ class LiquidityBalancerTest extends TestCase
         $this->assertSame('buy', $result['unitsOfCoinsResult']['B']['text']);
         $this->assertEqualsWithDelta(7.5 * 1.01, $result['unitsOfCoinsResult']['B']['amount'], 1e-9);
     }
+
+    public function test_result_includes_pool_value_weights(): void
+    {
+        $result = $this->balancer->calculate([
+            'coinA_initial' => 1,
+            'coinB_initial' => 2,
+            'coinA_price' => 100,
+            'coinB_price' => 50,
+            'coinA_adjusted' => 1,
+            'coinB_adjusted' => 2,
+        ]);
+
+        $this->assertEqualsWithDelta(0.5, $result['propA'], 1e-10);
+        $this->assertEqualsWithDelta(0.5, $result['propB'], 1e-10);
+    }
+
+    public function test_invalid_inputs_return_null_pool_weights(): void
+    {
+        $result = $this->balancer->calculate([
+            'coinA_initial' => 0,
+            'coinB_initial' => 2,
+            'coinA_price' => 100,
+            'coinB_price' => 50,
+            'coinA_adjusted' => 1,
+            'coinB_adjusted' => 2,
+        ]);
+
+        $this->assertNull($result['propA']);
+        $this->assertNull($result['propB']);
+    }
 }

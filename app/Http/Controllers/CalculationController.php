@@ -34,7 +34,7 @@ class CalculationController extends Controller
         return view('calculate', [
             'submitted' => true,
             'input' => $data,
-            'text' => $this->portfolioCopy->forTotalValue($calcResults['totalValueAdjusted']),
+            'personality' => $this->portfolioCopy->forTotalValue($calcResults['totalValueAdjusted']),
             'unitsOfCoinsResult' => $calcResults['unitsOfCoinsResult'],
             'finalCoinA' => $calcResults['finalCoinA'],
             'finalCoinB' => $calcResults['finalCoinB'],
@@ -45,6 +45,8 @@ class CalculationController extends Controller
             'slippageApplied' => $calcResults['slippageApplied'],
             'idealBuys' => $calcResults['idealBuys'],
             'totalValue' => $calcResults['totalValueAdjusted'],
+            'propA' => $calcResults['propA'],
+            'propB' => $calcResults['propB'],
         ]);
     }
 }
