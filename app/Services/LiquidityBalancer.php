@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-class LiquidityRebalancer
+class LiquidityBalancer
 {
     public const MODE_REBALANCE = 'rebalance';
     public const MODE_DEPLOY_BUDGET = 'deploy_budget';
@@ -17,6 +17,8 @@ class LiquidityRebalancer
     ];
 
     /**
+     * Calculate LP deposit plan from pool proportions, holdings, and optional capital.
+     *
      * @param  array{
      *     mode?: string,
      *     coinA_initial: float|int|string,
@@ -30,10 +32,10 @@ class LiquidityRebalancer
      * }  $data
      * @return array{
      *     mode: string,
+     *     totalValueAdjusted: float,
      *     unitsOfCoinsResult: array<string, array{text: string, amount: float}>,
      *     finalCoinA: float,
      *     finalCoinB: float,
-     *     totalValue: float,
      *     capitalRequired: float|null,
      *     capitalDeployed: float|null,
      *     warnings: list<string>,
@@ -118,36 +120,47 @@ class LiquidityRebalancer
         $totalValueAdjusted = $adjustedValueA + $adjustedValueB;
 
         if ($totalValueAdjusted <= 0) {
-            return $this->emptyResult(self::MODE_REBALANCE, $slippagePct, array_merge($warnings, [
-                'Holdings total value is zero. Add holdings or use Deploy budget mode.',
-            ]));
+            $warnings[] = 'Holdings total value is zero. Add holdings or use Deploy budget mode.';
+
+            return $this->buildResult(
+                mode: self::MODE_REBALANCE,
+                buyA: 0.0,
+                buyB: 0.0,
+                sellA: 0.0,
+                sellB: 0.0,
+                finalCoinA: 0.0,
+                finalCoinB: 0.0,
+                totalValueAdjusted: 0.0,
+                capitalRequired: null,
+                capitalDeployed: null,
+                warnings: $warnings,
+                slippagePct: $slippagePct,
+                idealBuyA: 0.0,
+                idealBuyB: 0.0
+            );
         }
 
         $targetValueA = $totalValueAdjusted * $propA;
-        $targetValueB = $totalValueAdjusted * (1 - $propA);
         $unitsOfCoinAToSell = ($adjustedValueA - $targetValueA) / $coinAPrice;
-        $unitsOfCoinBToSell = ($adjustedValueB - $targetValueB) / $coinBPrice;
+        $unitsOfCoinBToSell = ($adjustedValueB - ($totalValueAdjusted * (1 - $propA))) / $coinBPrice;
 
         $finalCoinA = $coinAAdjusted - $unitsOfCoinAToSell;
         $finalCoinB = $coinBAdjusted - $unitsOfCoinBToSell;
 
         $idealBuyA = $unitsOfCoinAToSell < 0 ? abs($unitsOfCoinAToSell) : 0.0;
         $idealBuyB = $unitsOfCoinBToSell < 0 ? abs($unitsOfCoinBToSell) : 0.0;
-
         $sellA = $unitsOfCoinAToSell > 0 ? $unitsOfCoinAToSell : 0.0;
         $sellB = $unitsOfCoinBToSell > 0 ? $unitsOfCoinBToSell : 0.0;
-        $buyA = $this->applySlippage($idealBuyA, $slippagePct);
-        $buyB = $this->applySlippage($idealBuyB, $slippagePct);
 
         return $this->buildResult(
             mode: self::MODE_REBALANCE,
-            buyA: $buyA,
-            buyB: $buyB,
+            buyA: $this->applySlippage($idealBuyA, $slippagePct),
+            buyB: $this->applySlippage($idealBuyB, $slippagePct),
             sellA: $sellA,
             sellB: $sellB,
             finalCoinA: $finalCoinA,
             finalCoinB: $finalCoinB,
-            totalValue: $totalValueAdjusted,
+            totalValueAdjusted: $totalValueAdjusted,
             capitalRequired: null,
             capitalDeployed: null,
             warnings: $warnings,
@@ -177,18 +190,16 @@ class LiquidityRebalancer
 
         $idealBuyA = ($newCapital * $propA) / $coinAPrice;
         $idealBuyB = ($newCapital * (1 - $propA)) / $coinBPrice;
-        $buyA = $this->applySlippage($idealBuyA, $slippagePct);
-        $buyB = $this->applySlippage($idealBuyB, $slippagePct);
 
         return $this->buildResult(
             mode: self::MODE_DEPLOY_BUDGET,
-            buyA: $buyA,
-            buyB: $buyB,
+            buyA: $this->applySlippage($idealBuyA, $slippagePct),
+            buyB: $this->applySlippage($idealBuyB, $slippagePct),
             sellA: 0.0,
             sellB: 0.0,
             finalCoinA: $idealBuyA,
             finalCoinB: $idealBuyB,
-            totalValue: $newCapital,
+            totalValueAdjusted: $newCapital,
             capitalRequired: null,
             capitalDeployed: $newCapital,
             warnings: $warnings,
@@ -231,19 +242,16 @@ class LiquidityRebalancer
             $finalCoinB = ($coinAAdjusted * $coinAPrice * (1 - $propA) / $propA) / $coinBPrice;
             $idealBuyA = 0.0;
             $idealBuyB = max(0.0, $finalCoinB - $coinBAdjusted);
-            $sellA = 0.0;
-            $sellB = 0.0;
 
             if ($coinBAdjusted > $finalCoinB) {
-                $unused = $coinBAdjusted - $finalCoinB;
                 $warnings[] = sprintf(
                     'You have %.6f excess Coin B unused for this LP deposit (not sold into Coin A).',
-                    $unused
+                    $coinBAdjusted - $finalCoinB
                 );
             }
 
             $capitalRequired = $idealBuyB * $coinBPrice;
-            $totalValue = ($finalCoinA * $coinAPrice) + ($finalCoinB * $coinBPrice);
+            $totalValueAdjusted = ($finalCoinA * $coinAPrice) + ($finalCoinB * $coinBPrice);
         } else {
             if ($coinBAdjusted <= 0) {
                 return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
@@ -261,23 +269,17 @@ class LiquidityRebalancer
             $finalCoinA = ($coinBAdjusted * $coinBPrice * $propA / (1 - $propA)) / $coinAPrice;
             $idealBuyB = 0.0;
             $idealBuyA = max(0.0, $finalCoinA - $coinAAdjusted);
-            $sellA = 0.0;
-            $sellB = 0.0;
 
             if ($coinAAdjusted > $finalCoinA) {
-                $unused = $coinAAdjusted - $finalCoinA;
                 $warnings[] = sprintf(
                     'You have %.6f excess Coin A unused for this LP deposit (not sold into Coin B).',
-                    $unused
+                    $coinAAdjusted - $finalCoinA
                 );
             }
 
             $capitalRequired = $idealBuyA * $coinAPrice;
-            $totalValue = ($finalCoinA * $coinAPrice) + ($finalCoinB * $coinBPrice);
+            $totalValueAdjusted = ($finalCoinA * $coinAPrice) + ($finalCoinB * $coinBPrice);
         }
-
-        $buyA = $this->applySlippage($idealBuyA, $slippagePct);
-        $buyB = $this->applySlippage($idealBuyB, $slippagePct);
 
         if ($capitalRequired <= 0) {
             $capitalRequired = null;
@@ -285,13 +287,13 @@ class LiquidityRebalancer
 
         return $this->buildResult(
             mode: $mode,
-            buyA: $buyA,
-            buyB: $buyB,
-            sellA: $sellA,
-            sellB: $sellB,
+            buyA: $this->applySlippage($idealBuyA, $slippagePct),
+            buyB: $this->applySlippage($idealBuyB, $slippagePct),
+            sellA: 0.0,
+            sellB: 0.0,
             finalCoinA: $finalCoinA,
             finalCoinB: $finalCoinB,
-            totalValue: $totalValue,
+            totalValueAdjusted: $totalValueAdjusted,
             capitalRequired: $capitalRequired,
             capitalDeployed: null,
             warnings: $warnings,
@@ -322,7 +324,7 @@ class LiquidityRebalancer
         float $sellB,
         float $finalCoinA,
         float $finalCoinB,
-        float $totalValue,
+        float $totalValueAdjusted,
         ?float $capitalRequired,
         ?float $capitalDeployed,
         array $warnings,
@@ -332,13 +334,13 @@ class LiquidityRebalancer
     ): array {
         return [
             'mode' => $mode,
+            'totalValueAdjusted' => $totalValueAdjusted,
             'unitsOfCoinsResult' => [
                 'A' => $this->actionFromBuySell($buyA, $sellA),
                 'B' => $this->actionFromBuySell($buyB, $sellB),
             ],
             'finalCoinA' => $finalCoinA,
             'finalCoinB' => $finalCoinB,
-            'totalValue' => $totalValue,
             'capitalRequired' => $capitalRequired,
             'capitalDeployed' => $capitalDeployed,
             'warnings' => $warnings,
@@ -363,7 +365,7 @@ class LiquidityRebalancer
             return ['text' => 'sell', 'amount' => $sell];
         }
 
-        return ['text' => 'buy', 'amount' => 0.0];
+        return ['text' => 'sell', 'amount' => 0.0];
     }
 
     /**
@@ -380,7 +382,7 @@ class LiquidityRebalancer
             sellB: 0.0,
             finalCoinA: 0.0,
             finalCoinB: 0.0,
-            totalValue: 0.0,
+            totalValueAdjusted: 0.0,
             capitalRequired: null,
             capitalDeployed: null,
             warnings: $warnings,
