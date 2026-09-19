@@ -11,56 +11,57 @@
 @endphp
 
 @if (!$needsBuyA && !$needsBuyB && !$needsSellA && !$needsSellB)
-    <p class="instructions">
-        <strong>No swap needed. Your planned balances already match the pool ratio — add liquidity on your preferred DEX.</strong>
+    <p class="instructions instructions--balanced">
+        <strong>Already balanced.</strong>
+        Your planned amounts already match the pool ratio — nice work. Add liquidity on your preferred DEX.
     </p>
 @elseif ($needsBuyA && $needsBuyB && !$needsSellA && !$needsSellB)
     <p class="instructions">
-        <strong>No more fooling around. Acquire <em>{{ $amountA }}</em> of coin A and
-            <em>{{ $amountB }}</em> of coin B (for example via
-            <a href="https://swap.defillama.com" class="link">Llamaswap</a>
-            on the correct blockchain — two buys or one routing path). After you have both sides, add the liquidity to your preferred DEX.
-        </strong>
+        <strong>Time to even the scales.</strong>
+        Acquire <em>{{ $amountA }}</em> of Coin A and
+        <em>{{ $amountB }}</em> of Coin B (for example via
+        <a href="https://swap.defillama.com" class="llamaswap-link">Llamaswap</a>
+        on the correct blockchain — two buys or one routing path). After you have both sides, add the liquidity to your preferred DEX.
     </p>
 @elseif ($needsSellA && $needsBuyB)
     <p class="instructions">
-        <strong>No more fooling around. Simply go to
-            <a href="https://swap.defillama.com" class="link">Llamaswap</a>,
-            swap <em>{{ $amountA }}</em> of coin A for
-            <em>{{ $amountB }}</em> of coin B on the correct blockchain.
-            After the swap, then add the liquidity to your preferred DEX
-        </strong>
+        <strong>Time to even the scales.</strong>
+        Go to
+        <a href="https://swap.defillama.com" class="llamaswap-link">Llamaswap</a>,
+        swap <em>{{ $amountA }}</em> of Coin A for
+        <em>{{ $amountB }}</em> of Coin B on the correct blockchain.
+        After the swap, add the liquidity to your preferred DEX.
     </p>
 @elseif ($needsSellB && $needsBuyA)
     <p class="instructions">
-        <strong>No more fooling around. Simply go to
-            <a href="https://swap.defillama.com" class="link">Llamaswap</a>,
-            swap <em>{{ $amountB }}</em> of coin B for
-            <em>{{ $amountA }}</em> of coin A on the correct blockchain.
-            After the swap, then add the liquidity to your preferred DEX
-        </strong>
+        <strong>Time to even the scales.</strong>
+        Go to
+        <a href="https://swap.defillama.com" class="llamaswap-link">Llamaswap</a>,
+        swap <em>{{ $amountB }}</em> of Coin B for
+        <em>{{ $amountA }}</em> of Coin A on the correct blockchain.
+        After the swap, add the liquidity to your preferred DEX.
     </p>
 @elseif ($needsBuyA && !$needsBuyB && !$needsSellA && !$needsSellB)
     <p class="instructions">
-        <strong>No more fooling around. Simply go to
-            <a href="https://swap.defillama.com" class="link">Llamaswap</a>,
-            buy <em>{{ $amountA }}</em> of coin A on the correct blockchain.
-            After the purchase, then add the liquidity to your preferred DEX
-        </strong>
+        <strong>Time to even the scales.</strong>
+        Go to
+        <a href="https://swap.defillama.com" class="llamaswap-link">Llamaswap</a>,
+        buy <em>{{ $amountA }}</em> of Coin A on the correct blockchain.
+        After the purchase, add the liquidity to your preferred DEX.
     </p>
 @elseif ($needsBuyB && !$needsBuyA && !$needsSellA && !$needsSellB)
     <p class="instructions">
-        <strong>No more fooling around. Simply go to
-            <a href="https://swap.defillama.com" class="link">Llamaswap</a>,
-            buy <em>{{ $amountB }}</em> of coin B on the correct blockchain.
-            After the purchase, then add the liquidity to your preferred DEX
-        </strong>
+        <strong>Time to even the scales.</strong>
+        Go to
+        <a href="https://swap.defillama.com" class="llamaswap-link">Llamaswap</a>,
+        buy <em>{{ $amountB }}</em> of Coin B on the correct blockchain.
+        After the purchase, add the liquidity to your preferred DEX.
     </p>
 @else
     <p class="instructions">
-        <strong>Review the breakdown below, execute the listed buys/sells (for example via
-            <a href="https://swap.defillama.com" class="link">Llamaswap</a>),
-            then add liquidity on your preferred DEX.
-        </strong>
+        <strong>Review the plan below,</strong>
+        execute the listed buys/sells (for example via
+        <a href="https://swap.defillama.com" class="llamaswap-link">Llamaswap</a>),
+        then add liquidity on your preferred DEX.
     </p>
 @endif

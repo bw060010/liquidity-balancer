@@ -40,7 +40,9 @@ class LiquidityBalancer
      *     capitalDeployed: float|null,
      *     warnings: list<string>,
      *     slippageApplied: float,
-     *     idealBuys: array{A: float, B: float}
+     *     idealBuys: array{A: float, B: float},
+     *     propA: float|null,
+     *     propB: float|null
      * }
      */
     public function calculate(array $data): array
@@ -136,7 +138,8 @@ class LiquidityBalancer
                 warnings: $warnings,
                 slippagePct: $slippagePct,
                 idealBuyA: 0.0,
-                idealBuyB: 0.0
+                idealBuyB: 0.0,
+                propA: $propA
             );
         }
 
@@ -166,7 +169,8 @@ class LiquidityBalancer
             warnings: $warnings,
             slippagePct: $slippagePct,
             idealBuyA: $idealBuyA,
-            idealBuyB: $idealBuyB
+            idealBuyB: $idealBuyB,
+            propA: $propA
         );
     }
 
@@ -185,7 +189,7 @@ class LiquidityBalancer
         if ($newCapital === null || $newCapital <= 0) {
             return $this->emptyResult(self::MODE_DEPLOY_BUDGET, $slippagePct, array_merge($warnings, [
                 'Deploy budget mode requires new capital greater than zero.',
-            ]));
+            ]), $propA);
         }
 
         $idealBuyA = ($newCapital * $propA) / $coinAPrice;
@@ -205,7 +209,8 @@ class LiquidityBalancer
             warnings: $warnings,
             slippagePct: $slippagePct,
             idealBuyA: $idealBuyA,
-            idealBuyB: $idealBuyB
+            idealBuyB: $idealBuyB,
+            propA: $propA
         );
     }
 
@@ -229,13 +234,13 @@ class LiquidityBalancer
             if ($coinAAdjusted <= 0) {
                 return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
                     'Keep Coin A mode needs Coin A holdings greater than zero. Use Deploy budget or Rebalance instead.',
-                ]));
+                ]), $propA);
             }
 
             if ($propA <= 0 || $propA >= 1) {
                 return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
                     'Pool value weights are invalid for keep-side planning.',
-                ]));
+                ]), $propA);
             }
 
             $finalCoinA = $coinAAdjusted;
@@ -256,13 +261,13 @@ class LiquidityBalancer
             if ($coinBAdjusted <= 0) {
                 return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
                     'Keep Coin B mode needs Coin B holdings greater than zero. Use Deploy budget or Rebalance instead.',
-                ]));
+                ]), $propA);
             }
 
             if ($propA <= 0 || $propA >= 1) {
                 return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
                     'Pool value weights are invalid for keep-side planning.',
-                ]));
+                ]), $propA);
             }
 
             $finalCoinB = $coinBAdjusted;
@@ -299,7 +304,8 @@ class LiquidityBalancer
             warnings: $warnings,
             slippagePct: $slippagePct,
             idealBuyA: $idealBuyA,
-            idealBuyB: $idealBuyB
+            idealBuyB: $idealBuyB,
+            propA: $propA
         );
     }
 
@@ -330,7 +336,8 @@ class LiquidityBalancer
         array $warnings,
         float $slippagePct,
         float $idealBuyA,
-        float $idealBuyB
+        float $idealBuyB,
+        ?float $propA = null
     ): array {
         return [
             'mode' => $mode,
@@ -349,6 +356,8 @@ class LiquidityBalancer
                 'A' => $idealBuyA,
                 'B' => $idealBuyB,
             ],
+            'propA' => $propA,
+            'propB' => $propA === null ? null : (1 - $propA),
         ];
     }
 
@@ -372,7 +381,7 @@ class LiquidityBalancer
      * @param  list<string>  $warnings
      * @return array<string, mixed>
      */
-    private function emptyResult(string $mode, float $slippagePct, array $warnings): array
+    private function emptyResult(string $mode, float $slippagePct, array $warnings, ?float $propA = null): array
     {
         return $this->buildResult(
             mode: $mode,
@@ -388,7 +397,8 @@ class LiquidityBalancer
             warnings: $warnings,
             slippagePct: $slippagePct,
             idealBuyA: 0.0,
-            idealBuyB: 0.0
+            idealBuyB: 0.0,
+            propA: $propA
         );
     }
 }

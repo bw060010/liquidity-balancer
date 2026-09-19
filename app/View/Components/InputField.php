@@ -17,6 +17,7 @@ class InputField extends Component
         public string $pattern = '\d+(\.\d+)?',
         public string $inputClass = '',
         public ?string $id = null,
+        public ?string $hint = null,
     ) {
         $this->id = $id ?? $name;
     }

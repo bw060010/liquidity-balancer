@@ -17,22 +17,28 @@ class PortfolioCopyTest extends TestCase
 
     public function test_shrimp_tier_for_small_portfolio(): void
     {
-        $text = $this->copy->forTotalValue(50);
+        $personality = $this->copy->forTotalValue(50);
 
-        $this->assertStringContainsString('shrimp', $text);
+        $this->assertSame('shrimp', $personality['id']);
+        $this->assertSame('Shrimp', $personality['label']);
+        $this->assertStringContainsString('shrimp', strtolower($personality['short']));
+        $this->assertNotEmpty($personality['full']);
     }
 
     public function test_whale_tier_for_large_portfolio(): void
     {
-        $text = $this->copy->forTotalValue(250000);
+        $personality = $this->copy->forTotalValue(250000);
 
-        $this->assertStringContainsString('whale', strtolower($text));
+        $this->assertSame('whale', $personality['id']);
+        $this->assertSame('Whale', $personality['label']);
+        $this->assertStringContainsString('whale', strtolower($personality['short']));
     }
 
     public function test_boundary_at_exactly_one_hundred_is_shrimp(): void
     {
-        $text = $this->copy->forTotalValue(100);
+        $personality = $this->copy->forTotalValue(100);
 
-        $this->assertStringContainsString('shrimp', $text);
+        $this->assertSame('shrimp', $personality['id']);
+        $this->assertStringContainsString('shrimp', strtolower($personality['full']));
     }
 }
