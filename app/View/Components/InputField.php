@@ -8,17 +8,17 @@ use Illuminate\View\Component;
 
 class InputField extends Component
 {
-    /**
-     * Create a new component instance.
-     */
-    public function __construct()
-    {
-        //
+    public function __construct(
+        public string $name,
+        public string $label,
+        public string $value = '',
+        public bool $readonly = false,
+        public string $pattern = '\d+(\.\d+)?',
+        public ?string $id = null,
+    ) {
+        $this->id = $id ?? $name;
     }
 
-    /**
-     * Get the view / contents that represent the component.
-     */
     public function render(): View|Closure|string
     {
         return view('components.input-field');
