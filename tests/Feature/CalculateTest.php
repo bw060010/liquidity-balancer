@@ -25,6 +25,7 @@ class CalculateTest extends TestCase
     public function test_valid_calculation_shows_results(): void
     {
         $response = $this->post(route('calculate.store'), [
+            'mode' => 'rebalance',
             'coinA_initial' => 1,
             'coinB_initial' => 2,
             'coinA_price' => 100,
@@ -35,10 +36,34 @@ class CalculateTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Breakdown of the calculation', false);
+        $response->assertSee('Mode:', false);
+        $response->assertSee('Rebalance holdings', false);
         $response->assertSee('sell', false);
         $response->assertSee('buy', false);
         $response->assertSee('Llamaswap', false);
         $response->assertDontSee('{!!', false);
+    }
+
+    public function test_deploy_budget_mode_shows_dual_buy_instructions(): void
+    {
+        $response = $this->post(route('calculate.store'), [
+            'mode' => 'deploy_budget',
+            'new_capital' => 1000,
+            'coinA_initial' => 1,
+            'coinB_initial' => 2,
+            'coinA_price' => 100,
+            'coinB_price' => 50,
+            'coinA_adjusted' => 0,
+            'coinB_adjusted' => 0,
+            'slippage_pct' => 0,
+        ]);
+
+        $response->assertOk();
+        $response->assertSee('Deploy budget', false);
+        $response->assertSee('Capital deployed', false);
+        $response->assertSee('Acquire', false);
+        $response->assertSee('<em>5</em>', false);
+        $response->assertSee('<em>10</em>', false);
     }
 
     public function test_invalid_zero_price_shows_validation_errors(): void

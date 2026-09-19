@@ -13,7 +13,9 @@ class InputField extends Component
         public string $label,
         public string $value = '',
         public bool $readonly = false,
+        public bool $required = true,
         public string $pattern = '\d+(\.\d+)?',
+        public string $inputClass = '',
         public ?string $id = null,
     ) {
         $this->id = $id ?? $name;

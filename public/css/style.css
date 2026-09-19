@@ -88,6 +88,63 @@ p {
     margin-bottom: 15px; /* Space between sections */
 }
 
+.mode-fieldset {
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    padding: 12px 15px;
+    margin: 0;
+}
+
+.mode-fieldset legend {
+    padding: 0 6px;
+}
+
+.mode-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    margin-top: 6px;
+}
+
+.mode-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+.mode-hint {
+    margin: 10px 0 0;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.mode-result-label {
+    margin-bottom: 0.75rem;
+}
+
+.warnings-list {
+    list-style: disc;
+    margin: 0 0 1rem 1.25rem;
+    padding: 10px 12px;
+    background-color: #fff4e5;
+    border-left: 4px solid #d97706;
+    border-radius: 4px;
+    color: #7c2d12;
+}
+
+.capital-line,
+.slippage-note {
+    margin: 0 0 0.75rem;
+}
+
+.capital-line em,
+.slippage-note {
+    color: var(--third-color);
+    font-weight: bold;
+}
+
 .input-group {
     display: flex;
     align-items: center;

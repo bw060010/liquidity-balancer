@@ -25,6 +25,10 @@ class CalculationController extends Controller
     public function performCalculation(CalculateRequest $request): View
     {
         $data = $request->validated();
+        $data['coinA_adjusted'] = $data['coinA_adjusted'] ?? 0;
+        $data['coinB_adjusted'] = $data['coinB_adjusted'] ?? 0;
+        $data['slippage_pct'] = $data['slippage_pct'] ?? 0;
+
         $calcResults = $this->liquidityBalancer->calculate($data);
 
         return view('calculate', [
@@ -34,6 +38,13 @@ class CalculationController extends Controller
             'unitsOfCoinsResult' => $calcResults['unitsOfCoinsResult'],
             'finalCoinA' => $calcResults['finalCoinA'],
             'finalCoinB' => $calcResults['finalCoinB'],
+            'mode' => $calcResults['mode'],
+            'warnings' => $calcResults['warnings'],
+            'capitalRequired' => $calcResults['capitalRequired'],
+            'capitalDeployed' => $calcResults['capitalDeployed'],
+            'slippageApplied' => $calcResults['slippageApplied'],
+            'idealBuys' => $calcResults['idealBuys'],
+            'totalValue' => $calcResults['totalValueAdjusted'],
         ]);
     }
 }

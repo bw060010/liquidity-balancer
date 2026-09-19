@@ -11,9 +11,9 @@
         name="{{ $name }}"
         id="{{ $id }}"
         pattern="{{ $pattern }}"
-        class="input-field @error($name) input-field--error @enderror"
+        class="input-field {{ $inputClass }} @error($name) input-field--error @enderror"
         value="{{ $value }}"
-        required
+        @if ($required) required @endif
         @if ($readonly) readonly @endif
     >
     @error($name)

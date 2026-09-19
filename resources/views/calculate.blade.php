@@ -28,8 +28,62 @@
 
         <section class="form-container">
             <h2>Input</h2>
-            <form action="{{ route('calculate.store') }}#ad-placeholder" method="POST" class="form">
+            <form action="{{ route('calculate.store') }}#ad-placeholder" method="POST" class="form" id="deposit-planner-form">
                 @csrf
+                @php
+                    $selectedMode = old('mode', $input['mode'] ?? 'rebalance');
+                @endphp
+                <div class="section">
+                    <fieldset class="mode-fieldset">
+                        <legend class="input-label">Deposit mode</legend>
+                        <div class="mode-options" role="radiogroup" aria-label="Deposit mode">
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="rebalance"
+                                    {{ $selectedMode === 'rebalance' ? 'checked' : '' }}>
+                                <span>Rebalance holdings</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="deploy_budget"
+                                    {{ $selectedMode === 'deploy_budget' ? 'checked' : '' }}>
+                                <span>Deploy budget</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="keep_a"
+                                    {{ $selectedMode === 'keep_a' ? 'checked' : '' }}>
+                                <span>Keep Coin A</span>
+                            </label>
+                            <label class="mode-option">
+                                <input type="radio" name="mode" value="keep_b"
+                                    {{ $selectedMode === 'keep_b' ? 'checked' : '' }}>
+                                <span>Keep Coin B</span>
+                            </label>
+                        </div>
+                        <p class="mode-hint">Rebalance reshapes what you hold. Deploy budget splits new capital by pool weights. Keep modes fix one side and buy only the missing other side.</p>
+                        @error('mode')
+                            <p class="field-error" role="alert">{{ $message }}</p>
+                        @enderror
+                    </fieldset>
+                </div>
+                <div class="section" id="new-capital-section">
+                    <x-input-field
+                        name="new_capital"
+                        label="New capital ($)"
+                        :value="old('new_capital', $input['new_capital'] ?? '')"
+                        :required="false"
+                    >
+                        Dollar amount of new capital to split into Coin A and Coin B by the pool value weights. Holdings are ignored in Deploy budget mode.
+                    </x-input-field>
+                </div>
+                <div class="section">
+                    <x-input-field
+                        name="slippage_pct"
+                        label="Slippage buffer (%)"
+                        :value="old('slippage_pct', $input['slippage_pct'] ?? '')"
+                        :required="false"
+                    >
+                        Optional. Inflates buy amounts only (0–5%). Leave blank or 0 for ideal math.
+                    </x-input-field>
+                </div>
                 <div class="section">
                     <x-input-field
                         name="coinA_initial"
@@ -66,7 +120,7 @@
                         label="Price of Coin B"
                         :value="old('coinB_price', $input['coinB_price'] ?? '')"
                     >
-                        Enter the latest market price of Coin B (find on CoinGecko or similar). A.
+                        Enter the latest market price of Coin B (find on CoinGecko or similar).
                     </x-input-field>
                 </div>
                 <div class="section">
@@ -74,6 +128,7 @@
                         name="coinA_adjusted"
                         label="Your Coin A Holdings"
                         :value="old('coinA_adjusted', $input['coinA_adjusted'] ?? '')"
+                        input-class="holdings-field"
                     >
                         Indicate the total amount of Coin A you currently possess for liquidity calculations (can be zero).
                     </x-input-field>
@@ -83,6 +138,7 @@
                         name="coinB_adjusted"
                         label="Your Coin B Holdings"
                         :value="old('coinB_adjusted', $input['coinB_adjusted'] ?? '')"
+                        input-class="holdings-field"
                     >
                         Indicate the total amount of Coin B you currently possess for liquidity calculations (can be zero).
                     </x-input-field>
@@ -100,6 +156,31 @@
         @if (isset($unitsOfCoinsResult))
             <section class="results-container">
                 <h2>Output</h2>
+                @php
+                    $modeLabels = [
+                        'rebalance' => 'Rebalance holdings',
+                        'deploy_budget' => 'Deploy budget',
+                        'keep_a' => 'Keep Coin A',
+                        'keep_b' => 'Keep Coin B',
+                    ];
+                @endphp
+                <p class="mode-result-label"><strong>Mode:</strong> {{ $modeLabels[$mode] ?? $mode }}</p>
+                @if (!empty($warnings))
+                    <ul class="warnings-list">
+                        @foreach ($warnings as $warning)
+                            <li>{{ $warning }}</li>
+                        @endforeach
+                    </ul>
+                @endif
+                @if (!is_null($capitalDeployed ?? null))
+                    <p class="capital-line">Capital deployed: <em>${{ number_format((float) $capitalDeployed, 2) }}</em></p>
+                @endif
+                @if (!is_null($capitalRequired ?? null))
+                    <p class="capital-line">Capital required to buy the missing side: <em>${{ number_format((float) $capitalRequired, 2) }}</em></p>
+                @endif
+                @if (($slippageApplied ?? 0) > 0)
+                    <p class="slippage-note">Buy amounts include a {{ rtrim(rtrim(number_format((float) $slippageApplied, 4), '0'), '.') }}% slippage buffer.</p>
+                @endif
                 <p class="fun-text">{{ $text }}</p>
                 @include('partials.swap-instructions', ['unitsOfCoinsResult' => $unitsOfCoinsResult])
                 <div id="results" class="results">
@@ -123,6 +204,59 @@
             </p>
         </footer>
     </div>
+    <script>
+        (function () {
+            var form = document.getElementById('deposit-planner-form');
+            if (!form) return;
+
+            var capitalSection = document.getElementById('new-capital-section');
+            var capitalInput = document.getElementById('new_capital');
+            var holdingsFields = form.querySelectorAll('.holdings-field');
+
+            function selectedMode() {
+                var checked = form.querySelector('input[name="mode"]:checked');
+                return checked ? checked.value : 'rebalance';
+            }
+
+            function syncModeUi() {
+                var mode = selectedMode();
+                var isDeploy = mode === 'deploy_budget';
+
+                if (capitalSection) {
+                    capitalSection.style.display = isDeploy ? '' : 'none';
+                }
+                if (capitalInput) {
+                    if (isDeploy) {
+                        capitalInput.required = true;
+                    } else {
+                        capitalInput.required = false;
+                        capitalInput.removeAttribute('required');
+                    }
+                }
+
+                holdingsFields.forEach(function (field) {
+                    if (isDeploy) {
+                        field.required = false;
+                        field.removeAttribute('required');
+                    } else if (mode === 'keep_a' && field.id === 'coinA_adjusted') {
+                        field.required = true;
+                    } else if (mode === 'keep_b' && field.id === 'coinB_adjusted') {
+                        field.required = true;
+                    } else if (mode === 'rebalance') {
+                        field.required = true;
+                    } else {
+                        field.required = false;
+                        field.removeAttribute('required');
+                    }
+                });
+            }
+
+            form.querySelectorAll('input[name="mode"]').forEach(function (radio) {
+                radio.addEventListener('change', syncModeUi);
+            });
+            syncModeUi();
+        })();
+    </script>
 </body>
 
 </html>
