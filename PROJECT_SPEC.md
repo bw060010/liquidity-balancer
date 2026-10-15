@@ -27,7 +27,10 @@ A single-page **DEX liquidity deposit planner** for two-sided pools. Users enter
 - FormRequest validation (`CalculateRequest`) — positive prices/amounts, mode allowlist, deploy-budget capital required.
 - Blade UI: mode cards, pool ratio, prices, holdings, slippage; results as actionable buy/sell **receipts**, pool weight summary, swap instructions (e.g. Llamaswap), expandable ocean personality badge.
 - Shared `x-input-field` component + tooltip partials.
-- Client-side mode UI sync (show/hide capital vs holdings) via inline script on `calculate.blade.php`.
+- Mode labels/subtitles from `LiquidityBalancer::MODE_CATALOG` (single source for form + results).
+- Controller passes one `$result` array (plus `input` / `personality` / `modes`) to the view.
+- Client-side mode UI sync in `public/js/calculate-mode.js` (form `data-mode-*` attrs; no inline script).
+- Display helper `format_trimmed_number()` in `app/helpers.php`; slippage cap `SLIPPAGE_MAX_PCT`.
 
 ### Personality copy (`PortfolioCopy` + `config/portfolio_tiers.php`)
 
@@ -52,9 +55,11 @@ Tier labels by total adjusted USD value: Shrimp → Fish → Dolphin → Shark �
 | Routes | `routes/web.php` |
 | Controller | `app/Http/Controllers/CalculationController.php` |
 | Validation | `app/Http/Requests/CalculateRequest.php` |
-| Rebalance math | `app/Services/LiquidityBalancer.php` |
+| Rebalance math | `app/Services/LiquidityBalancer.php` (`MODE_CATALOG`, `SLIPPAGE_MAX_PCT`) |
 | Personality | `app/Services/PortfolioCopy.php`, `config/portfolio_tiers.php` |
 | Main view | `resources/views/calculate.blade.php` + `partials/` |
+| Mode UI JS | `public/js/calculate-mode.js` |
+| Helpers | `app/helpers.php` (`format_trimmed_number`) |
 | Styles | `public/css/style.css` (Vite `resources/css/app.css` is empty) |
 | Tests | `tests/Unit/*`, `tests/Feature/CalculateTest.php` |
 
@@ -72,13 +77,17 @@ php artisan test
 ## Remaining TODOs / next milestones
 
 1. **Docs polish** — Replace stock Laravel `README.md` with product-specific setup + mode explanations (this file is the agent-facing source of truth).
-2. **Vite alignment** — Either wire calculator CSS/JS through Vite (`resources/css`, extract inline mode script to `resources/js`) or document that static `public/css` is intentional and trim unused Vite deps.
+2. **Vite alignment (optional)** — Calculator CSS/JS stay static under `public/` by design (`style.css`, `calculate-mode.js`). Optionally migrate to Vite later or trim unused Vite deps.
 3. **Live prices (optional)** — CoinGecko (or similar) lookup helpers so users do not paste prices by hand; keep manual override.
 4. **Ads / monetization** — Fill or remove `.ad-placeholder` once an ad partner is chosen.
 5. **Accessibility / UX follow-ups** — Persist form state across refresh, clearer keep-side capital-required messaging, mobile pass on mode cards + receipts.
 6. **Hardening** — Rate-limit messaging, CSRF already on; consider honeypot/bot friction if public traffic grows.
-7. **Cleanup** — Unused `welcome.blade.php`; avoid committing file-mode-only (`644→755`) noise on storage/database gitignores; decide whether to track `package-lock.json`.
+7. **Cleanup** — Unused `welcome.blade.php`; avoid committing file-mode-only (`644→755`) noise on storage/database gitignores. (`package-lock.json` is tracked.)
 8. **Eval coverage** — Expand unit cases for keep-side edge cases and slippage; keep feature asserts tied to user-visible copy when UX copy changes.
+
+### Done recently
+
+- Architecture DRY pass: parameterized `keepSide`, `MODE_CATALOG`, slim `$result` view bag, extracted mode JS, `format_trimmed_number` + `SLIPPAGE_MAX_PCT`.
 
 ## Agent conventions
 

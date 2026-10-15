@@ -14,6 +14,11 @@
 </head>
 
 <body>
+    @php
+        $modes = $modes ?? \App\Services\LiquidityBalancer::MODE_CATALOG;
+        $selectedMode = old('mode', $input['mode'] ?? \App\Services\LiquidityBalancer::MODE_REBALANCE);
+        $slippageMax = \App\Services\LiquidityBalancer::SLIPPAGE_MAX_PCT;
+    @endphp
     <div class="grid-container{{ isset($submitted) ? ' grid-container--has-results' : '' }}">
         <header class="header{{ isset($submitted) ? ' header--settled' : '' }}">
             <div class="logo-container">
@@ -36,47 +41,31 @@
 
         <section class="form-container">
             <h2>Plan your deposit</h2>
-            <form action="{{ route('calculate.store') }}#results" method="POST" class="form" id="deposit-planner-form">
+            <form
+                action="{{ route('calculate.store') }}#results"
+                method="POST"
+                class="form"
+                id="deposit-planner-form"
+                data-mode-rebalance="{{ \App\Services\LiquidityBalancer::MODE_REBALANCE }}"
+                data-mode-deploy="{{ \App\Services\LiquidityBalancer::MODE_DEPLOY_BUDGET }}"
+                data-mode-keep-a="{{ \App\Services\LiquidityBalancer::MODE_KEEP_A }}"
+                data-mode-keep-b="{{ \App\Services\LiquidityBalancer::MODE_KEEP_B }}"
+            >
                 @csrf
-                @php
-                    $selectedMode = old('mode', $input['mode'] ?? 'rebalance');
-                @endphp
                 <div class="section">
                     <fieldset class="mode-fieldset">
                         <legend class="input-label">Deposit mode</legend>
                         <div class="mode-options" role="radiogroup" aria-label="Deposit mode">
-                            <label class="mode-option">
-                                <input type="radio" name="mode" value="rebalance"
-                                    {{ $selectedMode === 'rebalance' ? 'checked' : '' }}>
-                                <span class="mode-option__copy">
-                                    <span class="mode-option__title">Rebalance holdings</span>
-                                    <span class="mode-option__subtitle">Even the scales — reshape what you already hold</span>
-                                </span>
-                            </label>
-                            <label class="mode-option">
-                                <input type="radio" name="mode" value="deploy_budget"
-                                    {{ $selectedMode === 'deploy_budget' ? 'checked' : '' }}>
-                                <span class="mode-option__copy">
-                                    <span class="mode-option__title">Deploy budget</span>
-                                    <span class="mode-option__subtitle">Split fresh capital by pool weights</span>
-                                </span>
-                            </label>
-                            <label class="mode-option">
-                                <input type="radio" name="mode" value="keep_a"
-                                    {{ $selectedMode === 'keep_a' ? 'checked' : '' }}>
-                                <span class="mode-option__copy">
-                                    <span class="mode-option__title">Keep Coin A</span>
-                                    <span class="mode-option__subtitle">Hold Coin A fixed; buy only the missing Coin B</span>
-                                </span>
-                            </label>
-                            <label class="mode-option">
-                                <input type="radio" name="mode" value="keep_b"
-                                    {{ $selectedMode === 'keep_b' ? 'checked' : '' }}>
-                                <span class="mode-option__copy">
-                                    <span class="mode-option__title">Keep Coin B</span>
-                                    <span class="mode-option__subtitle">Hold Coin B fixed; buy only the missing Coin A</span>
-                                </span>
-                            </label>
+                            @foreach ($modes as $modeValue => $modeMeta)
+                                <label class="mode-option">
+                                    <input type="radio" name="mode" value="{{ $modeValue }}"
+                                        {{ $selectedMode === $modeValue ? 'checked' : '' }}>
+                                    <span class="mode-option__copy">
+                                        <span class="mode-option__title">{{ $modeMeta['label'] }}</span>
+                                        <span class="mode-option__subtitle">{{ $modeMeta['subtitle'] }}</span>
+                                    </span>
+                                </label>
+                            @endforeach
                         </div>
                         @error('mode')
                             <p class="field-error" role="alert">{{ $message }}</p>
@@ -180,7 +169,7 @@
                             :value="old('slippage_pct', $input['slippage_pct'] ?? '')"
                             :required="false"
                         >
-                            Optional. Inflates buy amounts only (0–5%). Leave blank or 0 for ideal math.
+                            Optional. Inflates buy amounts only (0–{{ $slippageMax }}%). Leave blank or 0 for ideal math.
                         </x-input-field>
                     </div>
                 </div>
@@ -195,7 +184,7 @@
             <!-- Ad content will be dynamically inserted here by Google Ads or other ad services -->
         </section>
 
-        @if (isset($submitted) && isset($unitsOfCoinsResult))
+        @if (isset($submitted) && isset($result))
             @include('partials.results-panel')
         @else
             <section class="results-container results-container--empty" id="results-placeholder" aria-live="polite">
@@ -213,64 +202,7 @@
             </p>
         </footer>
     </div>
-    <script>
-        (function () {
-            var form = document.getElementById('deposit-planner-form');
-            if (!form) return;
-
-            var capitalSection = document.getElementById('new-capital-section');
-            var capitalInput = document.getElementById('new_capital');
-            var holdingsSection = document.getElementById('holdings-section');
-            var holdingsFields = form.querySelectorAll('.holdings-field');
-
-            function selectedMode() {
-                var checked = form.querySelector('input[name="mode"]:checked');
-                return checked ? checked.value : 'rebalance';
-            }
-
-            function syncModeUi() {
-                var mode = selectedMode();
-                var isDeploy = mode === 'deploy_budget';
-
-                if (capitalSection) {
-                    capitalSection.hidden = !isDeploy;
-                    capitalSection.classList.toggle('field-group--visible', isDeploy);
-                }
-                if (holdingsSection) {
-                    holdingsSection.hidden = isDeploy;
-                }
-                if (capitalInput) {
-                    if (isDeploy) {
-                        capitalInput.required = true;
-                    } else {
-                        capitalInput.required = false;
-                        capitalInput.removeAttribute('required');
-                    }
-                }
-
-                holdingsFields.forEach(function (field) {
-                    if (isDeploy) {
-                        field.required = false;
-                        field.removeAttribute('required');
-                    } else if (mode === 'keep_a' && field.id === 'coinA_adjusted') {
-                        field.required = true;
-                    } else if (mode === 'keep_b' && field.id === 'coinB_adjusted') {
-                        field.required = true;
-                    } else if (mode === 'rebalance') {
-                        field.required = true;
-                    } else {
-                        field.required = false;
-                        field.removeAttribute('required');
-                    }
-                });
-            }
-
-            form.querySelectorAll('input[name="mode"]').forEach(function (radio) {
-                radio.addEventListener('change', syncModeUi);
-            });
-            syncModeUi();
-        })();
-    </script>
+    <script src="{{ asset('js/calculate-mode.js') }}" defer></script>
 </body>
 
 </html>

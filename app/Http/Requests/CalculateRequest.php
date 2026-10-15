@@ -38,7 +38,7 @@ class CalculateRequest extends FormRequest
             'coinA_adjusted' => ['nullable', 'numeric', 'gte:0'],
             'coinB_adjusted' => ['nullable', 'numeric', 'gte:0'],
             'new_capital' => ['required_if:mode,deploy_budget', 'nullable', 'numeric', 'gt:0'],
-            'slippage_pct' => ['nullable', 'numeric', 'min:0', 'max:5'],
+            'slippage_pct' => ['nullable', 'numeric', 'min:0', 'max:'.LiquidityBalancer::SLIPPAGE_MAX_PCT],
         ];
     }
 

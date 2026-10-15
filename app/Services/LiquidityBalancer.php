@@ -5,9 +5,39 @@ namespace App\Services;
 class LiquidityBalancer
 {
     public const MODE_REBALANCE = 'rebalance';
+
     public const MODE_DEPLOY_BUDGET = 'deploy_budget';
+
     public const MODE_KEEP_A = 'keep_a';
+
     public const MODE_KEEP_B = 'keep_b';
+
+    /** Maximum allowed slippage buffer percent (validation + UI copy). */
+    public const SLIPPAGE_MAX_PCT = 5;
+
+    /**
+     * UI catalog: mode value => label + subtitle for form radios and results.
+     *
+     * @var array<string, array{label: string, subtitle: string}>
+     */
+    public const MODE_CATALOG = [
+        self::MODE_REBALANCE => [
+            'label' => 'Rebalance holdings',
+            'subtitle' => 'Even the scales — reshape what you already hold',
+        ],
+        self::MODE_DEPLOY_BUDGET => [
+            'label' => 'Deploy budget',
+            'subtitle' => 'Split fresh capital by pool weights',
+        ],
+        self::MODE_KEEP_A => [
+            'label' => 'Keep Coin A',
+            'subtitle' => 'Hold Coin A fixed; buy only the missing Coin B',
+        ],
+        self::MODE_KEEP_B => [
+            'label' => 'Keep Coin B',
+            'subtitle' => 'Hold Coin B fixed; buy only the missing Coin A',
+        ],
+    ];
 
     public const MODES = [
         self::MODE_REBALANCE,
@@ -228,67 +258,56 @@ class LiquidityBalancer
         float $slippagePct,
         array $warnings
     ): array {
-        $mode = $keptSide === 'A' ? self::MODE_KEEP_A : self::MODE_KEEP_B;
+        $keepA = $keptSide === 'A';
+        $mode = $keepA ? self::MODE_KEEP_A : self::MODE_KEEP_B;
+        $keptLabel = $keepA ? 'A' : 'B';
+        $otherLabel = $keepA ? 'B' : 'A';
 
-        if ($keptSide === 'A') {
-            if ($coinAAdjusted <= 0) {
-                return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
-                    'Keep Coin A mode needs Coin A holdings greater than zero. Use Deploy budget or Rebalance instead.',
-                ]), $propA);
-            }
+        $keptHoldings = $keepA ? $coinAAdjusted : $coinBAdjusted;
+        $otherHoldings = $keepA ? $coinBAdjusted : $coinAAdjusted;
+        $keptPrice = $keepA ? $coinAPrice : $coinBPrice;
+        $otherPrice = $keepA ? $coinBPrice : $coinAPrice;
+        $keptProp = $keepA ? $propA : (1 - $propA);
 
-            if ($propA <= 0 || $propA >= 1) {
-                return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
-                    'Pool value weights are invalid for keep-side planning.',
-                ]), $propA);
-            }
-
-            $finalCoinA = $coinAAdjusted;
-            $finalCoinB = ($coinAAdjusted * $coinAPrice * (1 - $propA) / $propA) / $coinBPrice;
-            $idealBuyA = 0.0;
-            $idealBuyB = max(0.0, $finalCoinB - $coinBAdjusted);
-
-            if ($coinBAdjusted > $finalCoinB) {
-                $warnings[] = sprintf(
-                    'You have %.6f excess Coin B unused for this LP deposit (not sold into Coin A).',
-                    $coinBAdjusted - $finalCoinB
-                );
-            }
-
-            $capitalRequired = $idealBuyB * $coinBPrice;
-            $totalValueAdjusted = ($finalCoinA * $coinAPrice) + ($finalCoinB * $coinBPrice);
-        } else {
-            if ($coinBAdjusted <= 0) {
-                return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
-                    'Keep Coin B mode needs Coin B holdings greater than zero. Use Deploy budget or Rebalance instead.',
-                ]), $propA);
-            }
-
-            if ($propA <= 0 || $propA >= 1) {
-                return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
-                    'Pool value weights are invalid for keep-side planning.',
-                ]), $propA);
-            }
-
-            $finalCoinB = $coinBAdjusted;
-            $finalCoinA = ($coinBAdjusted * $coinBPrice * $propA / (1 - $propA)) / $coinAPrice;
-            $idealBuyB = 0.0;
-            $idealBuyA = max(0.0, $finalCoinA - $coinAAdjusted);
-
-            if ($coinAAdjusted > $finalCoinA) {
-                $warnings[] = sprintf(
-                    'You have %.6f excess Coin A unused for this LP deposit (not sold into Coin B).',
-                    $coinAAdjusted - $finalCoinA
-                );
-            }
-
-            $capitalRequired = $idealBuyA * $coinAPrice;
-            $totalValueAdjusted = ($finalCoinA * $coinAPrice) + ($finalCoinB * $coinBPrice);
+        if ($keptHoldings <= 0) {
+            return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
+                sprintf(
+                    'Keep Coin %s mode needs Coin %s holdings greater than zero. Use Deploy budget or Rebalance instead.',
+                    $keptLabel,
+                    $keptLabel
+                ),
+            ]), $propA);
         }
 
+        if ($propA <= 0 || $propA >= 1 || $keptProp <= 0 || $keptProp >= 1) {
+            return $this->emptyResult($mode, $slippagePct, array_merge($warnings, [
+                'Pool value weights are invalid for keep-side planning.',
+            ]), $propA);
+        }
+
+        $finalKept = $keptHoldings;
+        $finalOther = ($keptHoldings * $keptPrice * (1 - $keptProp) / $keptProp) / $otherPrice;
+        $idealBuyOther = max(0.0, $finalOther - $otherHoldings);
+
+        if ($otherHoldings > $finalOther) {
+            $warnings[] = sprintf(
+                'You have %.6f excess Coin %s unused for this LP deposit (not sold into Coin %s).',
+                $otherHoldings - $finalOther,
+                $otherLabel,
+                $keptLabel
+            );
+        }
+
+        $capitalRequired = $idealBuyOther * $otherPrice;
         if ($capitalRequired <= 0) {
             $capitalRequired = null;
         }
+
+        $finalCoinA = $keepA ? $finalKept : $finalOther;
+        $finalCoinB = $keepA ? $finalOther : $finalKept;
+        $idealBuyA = $keepA ? 0.0 : $idealBuyOther;
+        $idealBuyB = $keepA ? $idealBuyOther : 0.0;
+        $totalValueAdjusted = ($finalCoinA * $coinAPrice) + ($finalCoinB * $coinBPrice);
 
         return $this->buildResult(
             mode: $mode,

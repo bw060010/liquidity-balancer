@@ -1,19 +1,10 @@
 @php
     $actionA = $unitsOfCoinsResult['A']['text'] ?? '';
     $actionB = $unitsOfCoinsResult['B']['text'] ?? '';
-    $amountA = $unitsOfCoinsResult['A']['amount'] ?? 0;
-    $amountB = $unitsOfCoinsResult['B']['amount'] ?? 0;
-
-    $formatAmount = function ($amount): string {
-        $formatted = rtrim(rtrim(number_format((float) $amount, 8, '.', ''), '0'), '.');
-
-        return $formatted === '' ? '0' : $formatted;
-    };
-
-    $displayA = $formatAmount($amountA);
-    $displayB = $formatAmount($amountB);
-    $displayFinalA = $formatAmount($finalCoinA);
-    $displayFinalB = $formatAmount($finalCoinB);
+    $displayA = format_trimmed_number($unitsOfCoinsResult['A']['amount'] ?? 0);
+    $displayB = format_trimmed_number($unitsOfCoinsResult['B']['amount'] ?? 0);
+    $displayFinalA = format_trimmed_number($finalCoinA);
+    $displayFinalB = format_trimmed_number($finalCoinB);
 @endphp
 
 <div class="receipt" aria-label="Buy and sell plan">
