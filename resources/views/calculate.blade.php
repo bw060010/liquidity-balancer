@@ -75,102 +75,112 @@
 
                 <div class="field-group" id="new-capital-section">
                     <h3 class="field-group__title">New capital</h3>
-                    <div class="section">
-                        <x-input-field
-                            name="new_capital"
-                            label="New capital ($)"
-                            :value="old('new_capital', $input['new_capital'] ?? '')"
-                            :required="false"
-                        >
-                            Dollar amount of new capital to split into Coin A and Coin B by the pool value weights. Holdings are ignored in Deploy budget mode.
-                        </x-input-field>
+                    <div class="field-row field-row--single">
+                        <div class="section">
+                            <x-input-field
+                                name="new_capital"
+                                label="New capital ($)"
+                                :value="old('new_capital', $input['new_capital'] ?? '')"
+                                :required="false"
+                            >
+                                Dollar amount of new capital to split into Coin A and Coin B by the pool value weights. Holdings are ignored in Deploy budget mode.
+                            </x-input-field>
+                        </div>
                     </div>
                 </div>
 
                 <div class="field-group">
                     <h3 class="field-group__title">Pool ratio</h3>
-                    <div class="section">
-                        <x-input-field
-                            name="coinA_initial"
-                            label="Coin A Reference Amount"
-                            :value="old('coinA_initial', $input['coinA_initial'] ?? '1')"
-                            :readonly="true"
-                            hint="Fixed at 1 so Coin B is easy to compare"
-                        >
-                            Fixed at 1 for Coin A to standardize comparison against Coin B
-                        </x-input-field>
-                    </div>
-                    <div class="section">
-                        <x-input-field
-                            name="coinB_initial"
-                            label="Coin B Equivalent Amount"
-                            :value="old('coinB_initial', $input['coinB_initial'] ?? '')"
-                            hint="From your DEX deposit screen"
-                        >
-                            Enter the amount of Coin B equivalent to 1 unit of Coin A according to the latest DEX deposit rates
-                            <img src="{{ asset('images/tooltips/example_coin_b_equivalent_amount.png') }}"
-                                alt="Example Coin B Equivalent Amount from a DEX deposit screen">
-                        </x-input-field>
+                    <div class="field-row">
+                        <div class="section">
+                            <x-input-field
+                                name="coinA_initial"
+                                label="Coin A Reference Amount"
+                                :value="old('coinA_initial', $input['coinA_initial'] ?? '1')"
+                                :readonly="true"
+                                hint="Fixed at 1 so Coin B is easy to compare"
+                            >
+                                Fixed at 1 for Coin A to standardize comparison against Coin B
+                            </x-input-field>
+                        </div>
+                        <div class="section">
+                            <x-input-field
+                                name="coinB_initial"
+                                label="Coin B Equivalent Amount"
+                                :value="old('coinB_initial', $input['coinB_initial'] ?? '')"
+                                hint="From your DEX deposit screen"
+                            >
+                                Enter the amount of Coin B equivalent to 1 unit of Coin A according to the latest DEX deposit rates
+                                <img src="{{ asset('images/tooltips/example_coin_b_equivalent_amount.png') }}"
+                                    alt="Example Coin B Equivalent Amount from a DEX deposit screen">
+                            </x-input-field>
+                        </div>
                     </div>
                 </div>
 
                 <div class="field-group">
                     <h3 class="field-group__title">Prices</h3>
-                    <div class="section">
-                        <x-input-field
-                            name="coinA_price"
-                            label="Price of Coin A"
-                            :value="old('coinA_price', $input['coinA_price'] ?? '')"
-                        >
-                            Enter the latest market price of Coin A (find on CoinGecko or similar)
-                        </x-input-field>
-                    </div>
-                    <div class="section">
-                        <x-input-field
-                            name="coinB_price"
-                            label="Price of Coin B"
-                            :value="old('coinB_price', $input['coinB_price'] ?? '')"
-                        >
-                            Enter the latest market price of Coin B (find on CoinGecko or similar).
-                        </x-input-field>
+                    <div class="field-row">
+                        <div class="section">
+                            <x-input-field
+                                name="coinA_price"
+                                label="Price of Coin A"
+                                :value="old('coinA_price', $input['coinA_price'] ?? '')"
+                            >
+                                Enter the latest market price of Coin A (find on CoinGecko or similar)
+                            </x-input-field>
+                        </div>
+                        <div class="section">
+                            <x-input-field
+                                name="coinB_price"
+                                label="Price of Coin B"
+                                :value="old('coinB_price', $input['coinB_price'] ?? '')"
+                            >
+                                Enter the latest market price of Coin B (find on CoinGecko or similar).
+                            </x-input-field>
+                        </div>
                     </div>
                 </div>
 
                 <div class="field-group" id="holdings-section">
                     <h3 class="field-group__title">Your position</h3>
-                    <div class="section">
-                        <x-input-field
-                            name="coinA_adjusted"
-                            label="Your Coin A Holdings"
-                            :value="old('coinA_adjusted', $input['coinA_adjusted'] ?? '')"
-                            input-class="holdings-field"
-                        >
-                            Indicate the total amount of Coin A you currently possess for liquidity calculations (can be zero).
-                        </x-input-field>
-                    </div>
-                    <div class="section">
-                        <x-input-field
-                            name="coinB_adjusted"
-                            label="Your Coin B Holdings"
-                            :value="old('coinB_adjusted', $input['coinB_adjusted'] ?? '')"
-                            input-class="holdings-field"
-                        >
-                            Indicate the total amount of Coin B you currently possess for liquidity calculations (can be zero).
-                        </x-input-field>
+                    <div class="field-row">
+                        <div class="section">
+                            <x-input-field
+                                name="coinA_adjusted"
+                                label="Your Coin A Holdings"
+                                :value="old('coinA_adjusted', $input['coinA_adjusted'] ?? '')"
+                                input-class="holdings-field"
+                            >
+                                Indicate the total amount of Coin A you currently possess for liquidity calculations (can be zero).
+                            </x-input-field>
+                        </div>
+                        <div class="section">
+                            <x-input-field
+                                name="coinB_adjusted"
+                                label="Your Coin B Holdings"
+                                :value="old('coinB_adjusted', $input['coinB_adjusted'] ?? '')"
+                                input-class="holdings-field"
+                            >
+                                Indicate the total amount of Coin B you currently possess for liquidity calculations (can be zero).
+                            </x-input-field>
+                        </div>
                     </div>
                 </div>
 
                 <div class="field-group">
                     <h3 class="field-group__title">Slippage</h3>
-                    <div class="section">
-                        <x-input-field
-                            name="slippage_pct"
-                            label="Slippage buffer (%)"
-                            :value="old('slippage_pct', $input['slippage_pct'] ?? '')"
-                            :required="false"
-                        >
-                            Optional. Inflates buy amounts only (0–{{ $slippageMax }}%). Leave blank or 0 for ideal math.
-                        </x-input-field>
+                    <div class="field-row field-row--single">
+                        <div class="section">
+                            <x-input-field
+                                name="slippage_pct"
+                                label="Slippage buffer (%)"
+                                :value="old('slippage_pct', $input['slippage_pct'] ?? '')"
+                                :required="false"
+                            >
+                                Optional. Inflates buy amounts only (0–{{ $slippageMax }}%). Leave blank or 0 for ideal math.
+                            </x-input-field>
+                        </div>
                     </div>
                 </div>
 
@@ -189,7 +199,10 @@
         @else
             <section class="results-container results-container--empty" id="results-placeholder" aria-live="polite">
                 <h2>Your next moves</h2>
-                <p class="empty-results">Your buy/sell plan will show up here after you calculate.</p>
+                <div class="empty-results-panel">
+                    <span class="empty-results-mark" aria-hidden="true"></span>
+                    <p class="empty-results">Your buy/sell plan will show up here after you calculate.</p>
+                </div>
             </section>
         @endif
 

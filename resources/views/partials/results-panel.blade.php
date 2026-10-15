@@ -27,21 +27,23 @@
         @endif
     </div>
 
-    <p class="mode-result-label"><strong>Mode:</strong> {{ $modeLabel }}</p>
+    <div class="results-meta">
+        <p class="mode-result-label"><strong>Mode:</strong> {{ $modeLabel }}</p>
 
-    @if ($pctA !== null && $pctB !== null)
-        <div class="pool-weights" aria-label="Pool value weights">
-            <div class="pool-weights__label">
-                Pool value weights:
-                <strong>{{ $pctA }}% Coin A</strong> /
-                <strong>{{ $pctB }}% Coin B</strong>
+        @if ($pctA !== null && $pctB !== null)
+            <div class="pool-weights" aria-label="Pool value weights">
+                <div class="pool-weights__label">
+                    Pool value weights:
+                    <strong>{{ $pctA }}% Coin A</strong> /
+                    <strong>{{ $pctB }}% Coin B</strong>
+                </div>
+                <div class="pool-weights__bar" role="img" aria-label="{{ $pctA }} percent Coin A, {{ $pctB }} percent Coin B">
+                    <span class="pool-weights__segment pool-weights__segment--a" style="width: {{ $pctA }}%"></span>
+                    <span class="pool-weights__segment pool-weights__segment--b" style="width: {{ $pctB }}%"></span>
+                </div>
             </div>
-            <div class="pool-weights__bar" role="img" aria-label="{{ $pctA }} percent Coin A, {{ $pctB }} percent Coin B">
-                <span class="pool-weights__segment pool-weights__segment--a" style="width: {{ $pctA }}%"></span>
-                <span class="pool-weights__segment pool-weights__segment--b" style="width: {{ $pctB }}%"></span>
-            </div>
-        </div>
-    @endif
+        @endif
+    </div>
 
     @include('partials.results-receipt', [
         'unitsOfCoinsResult' => $unitsOfCoinsResult,
@@ -51,14 +53,18 @@
 
     @include('partials.swap-instructions', ['unitsOfCoinsResult' => $unitsOfCoinsResult])
 
-    @if (!is_null($capitalDeployed))
-        <p class="capital-line">Capital deployed: <em>${{ number_format((float) $capitalDeployed, 2) }}</em></p>
-    @endif
-    @if (!is_null($capitalRequired))
-        <p class="capital-line">Capital required to buy the missing side: <em>${{ number_format((float) $capitalRequired, 2) }}</em></p>
-    @endif
-    @if ($slippageApplied > 0)
-        <p class="slippage-note">Buy amounts include a {{ format_trimmed_number($slippageApplied, 4) }}% slippage buffer.</p>
+    @if (!is_null($capitalDeployed) || !is_null($capitalRequired) || $slippageApplied > 0)
+        <div class="results-summary">
+            @if (!is_null($capitalDeployed))
+                <p class="capital-line">Capital deployed: <em>${{ number_format((float) $capitalDeployed, 2) }}</em></p>
+            @endif
+            @if (!is_null($capitalRequired))
+                <p class="capital-line">Capital required to buy the missing side: <em>${{ number_format((float) $capitalRequired, 2) }}</em></p>
+            @endif
+            @if ($slippageApplied > 0)
+                <p class="slippage-note">Buy amounts include a {{ format_trimmed_number($slippageApplied, 4) }}% slippage buffer.</p>
+            @endif
+        </div>
     @endif
 
     @if (!empty($warnings))
