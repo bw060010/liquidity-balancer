@@ -109,10 +109,10 @@
                                 label="Coin B Equivalent Amount"
                                 :value="old('coinB_initial', $input['coinB_initial'] ?? '')"
                                 hint="From your DEX deposit screen"
+                                :tooltip-image="asset('images/tooltips/example_coin_b_equivalent_amount.png')"
+                                tooltip-image-alt="Example Coin B Equivalent Amount from a DEX deposit screen"
                             >
                                 Enter the amount of Coin B equivalent to 1 unit of Coin A according to the latest DEX deposit rates
-                                <img src="{{ asset('images/tooltips/example_coin_b_equivalent_amount.png') }}"
-                                    alt="Example Coin B Equivalent Amount from a DEX deposit screen">
                             </x-input-field>
                         </div>
                     </div>

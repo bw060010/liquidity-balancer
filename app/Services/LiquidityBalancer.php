@@ -15,6 +15,9 @@ class LiquidityBalancer
     /** Maximum allowed slippage buffer percent (validation + UI copy). */
     public const SLIPPAGE_MAX_PCT = 5;
 
+    /** Upper bound for money/amount FormRequest fields (avoids INF/NaN). */
+    public const INPUT_MAX = 1e15;
+
     /**
      * UI catalog: mode value => label + subtitle for form radios and results.
      *

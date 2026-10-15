@@ -29,15 +29,17 @@ class CalculateRequest extends FormRequest
      */
     public function rules(): array
     {
+        $max = 'max:'.LiquidityBalancer::INPUT_MAX;
+
         return [
             'mode' => ['required', Rule::in(LiquidityBalancer::MODES)],
-            'coinA_initial' => ['required', 'numeric', 'gt:0'],
-            'coinB_initial' => ['required', 'numeric', 'gt:0'],
-            'coinA_price' => ['required', 'numeric', 'gt:0'],
-            'coinB_price' => ['required', 'numeric', 'gt:0'],
-            'coinA_adjusted' => ['nullable', 'numeric', 'gte:0'],
-            'coinB_adjusted' => ['nullable', 'numeric', 'gte:0'],
-            'new_capital' => ['required_if:mode,deploy_budget', 'nullable', 'numeric', 'gt:0'],
+            'coinA_initial' => ['required', 'numeric', 'gt:0', $max],
+            'coinB_initial' => ['required', 'numeric', 'gt:0', $max],
+            'coinA_price' => ['required', 'numeric', 'gt:0', $max],
+            'coinB_price' => ['required', 'numeric', 'gt:0', $max],
+            'coinA_adjusted' => ['nullable', 'numeric', 'gte:0', $max],
+            'coinB_adjusted' => ['nullable', 'numeric', 'gte:0', $max],
+            'new_capital' => ['required_if:mode,deploy_budget', 'nullable', 'numeric', 'gt:0', $max],
             'slippage_pct' => ['nullable', 'numeric', 'min:0', 'max:'.LiquidityBalancer::SLIPPAGE_MAX_PCT],
         ];
     }
@@ -62,6 +64,31 @@ class CalculateRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
+            if ($validator->errors()->isNotEmpty()) {
+                return;
+            }
+
+            $numericFields = [
+                'coinA_initial',
+                'coinB_initial',
+                'coinA_price',
+                'coinB_price',
+                'coinA_adjusted',
+                'coinB_adjusted',
+                'new_capital',
+            ];
+
+            foreach ($numericFields as $field) {
+                $raw = $this->input($field);
+                if ($raw === null || $raw === '') {
+                    continue;
+                }
+
+                if (! is_finite((float) $raw)) {
+                    $validator->errors()->add($field, 'The '.$field.' must be a finite number.');
+                }
+            }
+
             if ($validator->errors()->isNotEmpty()) {
                 return;
             }

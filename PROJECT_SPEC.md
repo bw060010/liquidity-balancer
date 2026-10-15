@@ -74,6 +74,15 @@ php artisan serve    # http://127.0.0.1:8000/calculate
 php artisan test
 ```
 
+## Production checklist
+
+Before a public deploy:
+
+- `APP_ENV=production` and `APP_DEBUG=false` (never ship with debug on).
+- `APP_URL` matches the public HTTPS host (TrustHosts uses it).
+- `SESSION_SECURE_COOKIE=true` when TLS terminates in front of the app.
+- `TRUSTED_PROXIES=*` (or explicit proxy IPs) when behind a CDN / load balancer so rate limits see real client IPs.
+
 ## Remaining TODOs / next milestones
 
 1. **Docs polish** — Replace stock Laravel `README.md` with product-specific setup + mode explanations (this file is the agent-facing source of truth).
@@ -81,12 +90,13 @@ php artisan test
 3. **Live prices (optional)** — CoinGecko (or similar) lookup helpers so users do not paste prices by hand; keep manual override.
 4. **Ads / monetization** — Fill or remove `.ad-placeholder` once an ad partner is chosen.
 5. **Accessibility / UX follow-ups** — Persist form state across refresh; clearer keep-side capital-required messaging. (Mode cards + receipts mobile/visual pass done.)
-6. **Hardening** — Rate-limit messaging, CSRF already on; consider honeypot/bot friction if public traffic grows.
+6. **Hardening (optional follow-ups)** — Consider honeypot/bot friction if public traffic grows; CSP/HSTS at reverse proxy.
 7. **Cleanup** — Unused `welcome.blade.php`; avoid committing file-mode-only (`644→755`) noise on storage/database gitignores. (`package-lock.json` is tracked.)
 8. **Eval coverage** — Expand unit cases for keep-side edge cases and slippage; keep feature asserts tied to user-visible copy when UX copy changes.
 
 ### Done recently
 
+- Security remediation: `INPUT_MAX` + finite validation, TrustHosts/TrustProxies, escaped tooltips, production checklist, cleaned `.gitignore`.
 - Calculator UI polish: spacing scale, paired field rows, buy/sell receipt badges, empty-results panel, sticky results on desktop; fixed New capital tooltip clipped by `#new-capital-section` overflow.
 - Architecture DRY pass: parameterized `keepSide`, `MODE_CATALOG`, slim `$result` view bag, extracted mode JS, `format_trimmed_number` + `SLIPPAGE_MAX_PCT`.
 

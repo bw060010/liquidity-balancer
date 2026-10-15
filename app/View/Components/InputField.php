@@ -18,6 +18,8 @@ class InputField extends Component
         public string $inputClass = '',
         public ?string $id = null,
         public ?string $hint = null,
+        public ?string $tooltipImage = null,
+        public string $tooltipImageAlt = '',
     ) {
         $this->id = $id ?? $name;
     }

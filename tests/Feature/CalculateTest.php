@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\LiquidityBalancer;
 use Tests\TestCase;
 
 class CalculateTest extends TestCase
@@ -23,6 +24,7 @@ class CalculateTest extends TestCase
         $response->assertSee('Your buy/sell plan will show up here', false);
         $response->assertSee('How this works', false);
         $response->assertSee('name="coinB_initial"', false);
+        $response->assertSee('images/tooltips/example_coin_b_equivalent_amount.png', false);
         $response->assertSee('Even the scales', false);
         $response->assertSee('lang="en"', false);
     }
@@ -146,5 +148,37 @@ class CalculateTest extends TestCase
 
         $followUp = $this->followRedirects($response);
         $followUp->assertSee('value="3.5"', false);
+    }
+
+    public function test_price_above_input_max_is_rejected(): void
+    {
+        $response = $this->from(route('calculate.show'))->post(route('calculate.store'), [
+            'mode' => 'rebalance',
+            'coinA_initial' => 1,
+            'coinB_initial' => 2,
+            'coinA_price' => LiquidityBalancer::INPUT_MAX * 10,
+            'coinB_price' => 50,
+            'coinA_adjusted' => 1,
+            'coinB_adjusted' => 1,
+        ]);
+
+        $response->assertRedirect(route('calculate.show'));
+        $response->assertSessionHasErrors(['coinA_price']);
+    }
+
+    public function test_non_finite_price_is_rejected(): void
+    {
+        $response = $this->from(route('calculate.show'))->post(route('calculate.store'), [
+            'mode' => 'rebalance',
+            'coinA_initial' => 1,
+            'coinB_initial' => 2,
+            'coinA_price' => 'INF',
+            'coinB_price' => 50,
+            'coinA_adjusted' => 1,
+            'coinB_adjusted' => 1,
+        ]);
+
+        $response->assertRedirect(route('calculate.show'));
+        $response->assertSessionHasErrors(['coinA_price']);
     }
 }

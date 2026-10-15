@@ -14,7 +14,12 @@
         <div class="tooltip-container">
             <span class="tooltip-icon" tabindex="0" aria-label="More info about {{ $label }}" aria-describedby="{{ $tooltipId }}">
                 @include('partials.tooltip-icon')
-                <span class="tooltip-text" id="{{ $tooltipId }}" role="tooltip">{!! $slot !!}</span>
+                <span class="tooltip-text" id="{{ $tooltipId }}" role="tooltip">
+                    {{ $slot }}
+                    @if ($tooltipImage)
+                        <img src="{{ $tooltipImage }}" alt="{{ $tooltipImageAlt }}">
+                    @endif
+                </span>
             </span>
         </div>
     </div>
