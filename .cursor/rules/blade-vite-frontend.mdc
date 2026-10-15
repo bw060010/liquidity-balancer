@@ -1,0 +1,45 @@
+---
+description: Blade UI, static CSS, and Vite asset conventions for the Liquidity Balancer calculator
+globs:
+  - resources/views/**/*.blade.php
+  - resources/css/**/*
+  - resources/js/**/*
+  - public/css/**/*
+  - vite.config.js
+---
+
+# Blade & frontend assets
+
+## Views
+
+- Calculator UI lives in `resources/views/calculate.blade.php` with logic-free partials under `partials/` and reusable `x-input-field`.
+- Escape output by default (`{{ }}`). Only use `{!! !!}` when the value is trusted and intentionally HTML.
+- Prefer `@include` / components over duplicating receipt, personality, or tooltip markup.
+- Keep one job per section: form plan vs results receipts vs disclaimer. Do not restyle the hero into a dashboard of cards unless the design system already uses that pattern.
+- When changing user-visible copy (headings, mode labels, empty states), update `tests/Feature/CalculateTest.php` in the same PR.
+
+## CSS
+
+- Primary styles today: `public/css/style.css` with CSS variables (`:root`). Extend that file for calculator visuals unless migrating fully to Vite.
+- Prefer existing design tokens (Sora / IBM Plex, ocean palette variables) — do not introduce Inter/Roboto/Arial or purple-on-white AI-default themes.
+- Avoid new card chrome (border + shadow + radius stacks) unless it wraps a real interactive control (e.g. mode radio).
+- Mobile: keep the first viewport readable; mode options and receipts must remain usable on narrow screens.
+
+## JS & Vite
+
+- Vite is scaffolded (`resources/js/app.js`, empty `resources/css/app.css`) but the calculator currently uses static CSS + an inline mode-sync script.
+- New interactive behavior: extract to `resources/js/` and load via `@vite` **or** a small deferred script partial — do not grow large inline `<script>` blocks in Blade.
+- If migrating styles to Vite, move tokens from `public/css/style.css` carefully and keep `asset('css/style.css')` working until cutover is complete.
+- No secrets in frontend code; only `VITE_*` public env vars if needed.
+
+## Good vs bad
+
+```blade
+{{-- Good --}}
+@include('partials.results-panel')
+<a href="{{ route('calculate.show') }}">Plan</a>
+
+{{-- Bad --}}
+{!! $userProvidedHtml !!}
+<a href="/calculate">Plan</a>
+```

@@ -1,0 +1,47 @@
+---
+description: Laravel 10 / PHP 8.1+ conventions for controllers, FormRequests, and services
+globs:
+  - app/**/*.php
+  - routes/**/*.php
+  - config/**/*.php
+  - bootstrap/**/*.php
+  - database/**/*.php
+---
+
+# Laravel PHP
+
+## Architecture
+
+- Keep `CalculationController` and other controllers thin: validate via FormRequest, call a service, return a view or redirect.
+- Put domain math and copy selection in `app/Services/*` (`LiquidityBalancer`, `PortfolioCopy`). Do not re-embed rebalance formulas in Blade or controllers.
+- Prefer constructor injection of services; mark injected deps `private readonly`.
+- Register named routes in `routes/web.php`; use `route('…')` in views and tests — avoid hard-coded URLs.
+
+## Typing & docs
+
+- Use explicit parameter and return types on all new methods.
+- Document non-trivial `array` shapes with PHPDoc `@param` / `@return` array shapes (see `LiquidityBalancer::calculate`).
+- Avoid `mixed` and untyped payloads at service boundaries; normalize casts (`(float)`, `(string)`) at the edge.
+
+## Validation & safety
+
+- Use FormRequests (`CalculateRequest`) for HTTP input; never trust raw `$request->all()` for calculations.
+- Guard division-by-zero and zero portfolio value in validation or service early returns with clear user-facing warnings.
+- Keep POST calculator routes throttled (`throttle:…`).
+- Never hardcode secrets, API keys, or DB passwords — use `.env` and keep `.env.example` in sync with dummy placeholders.
+
+## Style
+
+- Follow PSR-12; run Pint when touching PHP (`./vendor/bin/pint --dirty` if available).
+- Prefer `match` over long if/elseif chains for mode dispatch.
+- Constants for mode strings (`LiquidityBalancer::MODE_*`); do not scatter magic mode literals outside tests/views that must mirror the UI.
+
+## Good vs bad
+
+```php
+// Good — service owns math
+$results = $this->liquidityBalancer->calculate($request->validated());
+
+// Bad — math in the controller
+$propA = ($a * $pa) / (($a * $pa) + ($b * $pb));
+```

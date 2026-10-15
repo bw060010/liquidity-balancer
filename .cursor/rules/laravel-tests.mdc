@@ -1,0 +1,42 @@
+---
+description: PHPUnit feature and unit test conventions for Liquidity Balancer
+globs:
+  - tests/**/*.php
+  - phpunit.xml
+---
+
+# Laravel / PHPUnit tests
+
+## Layout
+
+- **Unit** (`tests/Unit`): pure service math and copy — instantiate services directly (no HTTP). Cover modes, slippage, balanced/zero holdings, keep-side capital.
+- **Feature** (`tests/Feature`): HTTP via `$this->get` / `$this->post` and named routes. Assert redirects, status, and **user-visible** strings (mode labels, receipts, empty states).
+- Extend `Tests\TestCase` for feature tests; plain `PHPUnit\Framework\TestCase` is fine for pure unit services that do not need the container (current `LiquidityBalancerTest` pattern).
+
+## Writing tests
+
+- Name methods `test_*` with behavior in the name (`test_deploy_budget_mode_shows_dual_buy_instructions`).
+- For floats, use `assertEqualsWithDelta(..., 1e-10)` — do not compare raw floats with `assertSame`.
+- When adding a calculator mode or warning path, add at least one unit case and one feature assertion for the happy path.
+- Prefer posting validated field sets that mirror the form (`mode`, pool amounts, prices, holdings / `new_capital`, `slippage_pct`).
+- Do not assert on implementation details (private method names); assert on return array keys / rendered HTML.
+
+## Running
+
+```bash
+php artisan test
+# or
+./vendor/bin/phpunit
+```
+
+## Good vs bad
+
+```php
+// Good
+$response->assertSee('Deploy budget', false);
+$this->assertEqualsWithDelta(5.0, $result['finalCoinA'], 1e-10);
+
+// Bad
+$this->assertEquals(5.0, $result['finalCoinA']); // brittle float equality
+$response->assertSee($internalDebugDump);
+```
