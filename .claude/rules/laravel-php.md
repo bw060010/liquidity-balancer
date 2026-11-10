@@ -1,13 +1,11 @@
 ---
-description: Laravel 10 / PHP 8.1+ conventions for controllers, FormRequests, and services
-globs:
-  - app/**/*.php
-  - routes/**/*.php
-  - config/**/*.php
-  - bootstrap/**/*.php
-  - database/**/*.php
+paths:
+  - "app/**/*.php"
+  - "routes/**/*.php"
+  - "config/**/*.php"
+  - "bootstrap/**/*.php"
+  - "database/**/*.php"
 ---
-
 # Laravel PHP
 
 ## Architecture

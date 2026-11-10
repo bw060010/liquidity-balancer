@@ -106,4 +106,4 @@ Before a public deploy:
 - Prefer FormRequest + typed service return arrays over ad-hoc request arrays in controllers.
 - When changing calculator UX copy, update `tests/Feature/CalculateTest.php` in the same change.
 - Do not hardcode secrets; use `.env` / `.env.example`.
-- See `.cursor/rules/*.mdc` for stack-scoped coding rules.
+- See `.claude/rules/*.md` for stack-scoped coding rules.

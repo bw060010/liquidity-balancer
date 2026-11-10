@@ -1,13 +1,11 @@
 ---
-description: Blade UI, static CSS, and Vite asset conventions for the Liquidity Balancer calculator
-globs:
-  - resources/views/**/*.blade.php
-  - resources/css/**/*
-  - resources/js/**/*
-  - public/css/**/*
-  - vite.config.js
+paths:
+  - "resources/views/**/*.blade.php"
+  - "resources/css/**/*"
+  - "resources/js/**/*"
+  - "public/css/**/*"
+  - "vite.config.js"
 ---
-
 # Blade & frontend assets
 
 ## Views

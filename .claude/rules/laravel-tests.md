@@ -1,10 +1,8 @@
 ---
-description: PHPUnit feature and unit test conventions for Liquidity Balancer
-globs:
-  - tests/**/*.php
-  - phpunit.xml
+paths:
+  - "tests/**/*.php"
+  - "phpunit.xml"
 ---
-
 # Laravel / PHPUnit tests
 
 ## Layout
